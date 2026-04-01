@@ -1008,6 +1008,13 @@ def terminal_tool(
                         "command": approval.get("command", command),
                         "description": approval.get("description", "command flagged"),
                         "pattern_key": approval.get("pattern_key", ""),
+                        "guard_event": {
+                            "event": "terminal_guard_blocked",
+                            "status": "approval_required",
+                            "command": approval.get("command", command),
+                            "description": approval.get("description", "command flagged"),
+                            "timestamp": int(time.time()),
+                        },
                     }, ensure_ascii=False)
                 # Command was blocked
                 desc = approval.get("description", "command flagged")
@@ -1019,7 +1026,14 @@ def terminal_tool(
                     "output": "",
                     "exit_code": -1,
                     "error": approval.get("message", fallback_msg),
-                    "status": "blocked"
+                    "status": "blocked",
+                    "guard_event": {
+                        "event": "terminal_guard_blocked",
+                        "status": "blocked",
+                        "command": command,
+                        "description": desc,
+                        "timestamp": int(time.time()),
+                    },
                 }, ensure_ascii=False)
 
         # Prepare command for execution

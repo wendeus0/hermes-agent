@@ -216,18 +216,14 @@ def test_529_overloaded_is_retried_and_recovers(monkeypatch):
     assert result["final_response"] == "Recovered"
 
 
-def test_429_exhausts_all_retries_before_raising(monkeypatch):
-    """429 must retry max_retries times, then return a failed result.
-
-    The agent no longer re-raises after exhausting retries — it returns a
-    result dict with the error in final_response.  This changed when the
-    fallback-provider feature was added (the agent tries a fallback before
-    giving up, and returns a result dict either way).
-    """
+def test_429_exhausts_all_retries_before_reporting_failure(monkeypatch):
+    """429 must retry max_retries times before returning a failed gateway result."""
     agent_cls = _make_agent_cls(_RateLimitError)  # always fails
     result = _run_with_agent(monkeypatch, agent_cls)
-    resp = str(result.get("final_response", ""))
-    assert "429" in resp or "retries" in resp.lower()
+    assert "API call failed after 3 retries" in str(result.get("final_response", ""))
+    assert "429" in str(result.get("final_response", ""))
+    # Gateway wrapper preserves api_calls field even on failures.
+    assert isinstance(result.get("api_calls"), int)
 
 
 def test_400_bad_request_is_non_retryable(monkeypatch):

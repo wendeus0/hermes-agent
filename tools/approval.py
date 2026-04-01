@@ -66,6 +66,9 @@ DANGEROUS_PATTERNS = [
     (r'\bxargs\s+.*\brm\b', "xargs with rm"),
     (r'\bfind\b.*-exec\s+(/\S*/)?rm\b', "find -exec rm"),
     (r'\bfind\b.*-delete\b', "find -delete"),
+    (r'\bgit\s+push\b[^\n]*\s(--force|-f|--force-with-lease)\b', "git push with force"),
+    (r'\bgit\s+reset\s+--hard\b', "git reset hard"),
+    (r'\bgit\s+clean\b[^\n]*(\s--force\b[^\n]*\s-d\b|\s-d\b[^\n]*\s--force\b|\s-[^\s\n]*f[^\s\n]*d[^\s\n]*\b|\s-[^\s\n]*d[^\s\n]*f[^\s\n]*\b)', "git clean force delete"),
     # Gateway protection: never start gateway outside systemd management
     (r'gateway\s+run\b.*(&\s*$|&\s*;|\bdisown\b|\bsetsid\b)', "start gateway outside systemd (use 'systemctl --user restart hermes-gateway')"),
     (r'\bnohup\b.*gateway\s+run\b', "start gateway outside systemd (use 'systemctl --user restart hermes-gateway')"),
@@ -464,8 +467,7 @@ def check_dangerous_command(command: str, env_type: str,
             "command": command,
             "description": description,
             "message": (
-                f"⚠️ This command is potentially dangerous ({description}). "
-                f"Asking the user for approval.\n\n**Command:**\n```\n{command}\n```"
+                f"⛔ BLOCKED until explicit approval: {description}. Use /approve to continue.\n\n**Command:**\n```\n{command}\n```"
             ),
         }
 
@@ -638,7 +640,7 @@ def check_all_command_guards(command: str, env_type: str,
             "command": command,
             "description": combined_desc,
             "message": (
-                f"⚠️ {combined_desc}. Asking the user for approval.\n\n**Command:**\n```\n{command}\n```"
+                f"⛔ BLOCKED until explicit approval: {combined_desc}. Use /approve to continue.\n\n**Command:**\n```\n{command}\n```"
             ),
         }
 

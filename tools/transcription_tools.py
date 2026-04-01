@@ -117,8 +117,12 @@ def is_stt_enabled(stt_config: Optional[dict] = None) -> bool:
 
 
 def _resolve_openai_api_key() -> str:
-    """Prefer the voice-tools key, but fall back to the normal OpenAI key."""
-    return os.getenv("VOICE_TOOLS_OPENAI_KEY", "") or os.getenv("OPENAI_API_KEY", "")
+    """Return only the voice-tools OpenAI key for STT.
+
+    STT OpenAI usage is intentionally isolated from general OPENAI_API_KEY
+    credentials to avoid accidental cross-provider fallback.
+    """
+    return os.getenv("VOICE_TOOLS_OPENAI_KEY", "")
 
 
 def _find_binary(binary_name: str) -> Optional[str]:
@@ -442,7 +446,7 @@ def _transcribe_openai(file_path: str, model_name: str) -> Dict[str, Any]:
         return {
             "success": False,
             "transcript": "",
-            "error": "Neither VOICE_TOOLS_OPENAI_KEY nor OPENAI_API_KEY is set",
+            "error": "VOICE_TOOLS_OPENAI_KEY is not set",
         }
 
     if not _HAS_OPENAI:

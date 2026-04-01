@@ -484,6 +484,14 @@ def detect_provider_for_model(
     if any(name_lower == m.lower() for m in current_models):
         return None
 
+    # Prefer OpenRouter slug remap for bare model names (no provider prefix).
+    # This avoids ambiguous cross-provider bare IDs like "claude-opus-4.6"
+    # and preserves a canonical provider/model slug.
+    if "/" not in name:
+        bare_or_slug = _find_openrouter_slug(name)
+        if bare_or_slug:
+            return ("openrouter", bare_or_slug)
+
     # --- Step 1: check static provider catalogs for a direct match ---
     direct_match: Optional[str] = None
     for pid, models in _PROVIDER_MODELS.items():

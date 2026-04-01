@@ -588,6 +588,9 @@ def _resolve_delegation_credentials(cfg: dict, parent_agent) -> dict:
     configured_api_key = str(cfg.get("api_key") or "").strip() or None
 
     if configured_base_url:
+        # Direct endpoint mode: never fall back to OPENROUTER_API_KEY here.
+        # A non-OpenRouter local/custom endpoint should only use explicit
+        # delegation.api_key or OPENAI_API_KEY.
         api_key = (
             configured_api_key
             or os.getenv("OPENAI_API_KEY", "").strip()

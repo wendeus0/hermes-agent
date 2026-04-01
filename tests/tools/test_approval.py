@@ -6,6 +6,8 @@ import tools.approval as approval_module
 from tools.approval import (
     _get_approval_mode,
     approve_session,
+    check_all_command_guards,
+    check_dangerous_command,
     clear_session,
     detect_dangerous_command,
     has_pending,
@@ -641,3 +643,50 @@ class TestNormalizationBypass:
         assert dangerous is False
 
 
+class TestDangerousGitPatterns:
+    def test_git_push_force_detected(self):
+        is_dangerous, key, desc = detect_dangerous_command("git push --force origin main")
+        assert is_dangerous is True
+        assert key is not None
+        assert "force" in desc.lower()
+
+    def test_git_reset_hard_detected(self):
+        is_dangerous, key, desc = detect_dangerous_command("git reset --hard HEAD~1")
+        assert is_dangerous is True
+        assert key is not None
+        assert "hard" in desc.lower() or "reset" in desc.lower()
+
+    def test_git_clean_fd_detected(self):
+        is_dangerous, key, desc = detect_dangerous_command("git clean -fd")
+        assert is_dangerous is True
+        assert key is not None
+        assert "clean" in desc.lower() or "delete" in desc.lower()
+
+
+class TestBlockedMessaging:
+    def test_gateway_approval_message_is_explicitly_blocked(self, monkeypatch):
+        monkeypatch.setenv("HERMES_GATEWAY_SESSION", "1")
+        monkeypatch.delenv("HERMES_INTERACTIVE", raising=False)
+        monkeypatch.delenv("HERMES_EXEC_ASK", raising=False)
+        try:
+            res = check_all_command_guards("git push --force origin main", "local")
+            assert res["approved"] is False
+            assert res.get("status") == "approval_required"
+            msg = (res.get("message") or "").lower()
+            assert "bloqueado" in msg or "blocked" in msg
+            assert "/approve" in msg
+        finally:
+            approval_module.clear_session("default")
+
+    def test_cli_denied_message_is_explicitly_blocked(self, monkeypatch):
+        monkeypatch.setenv("HERMES_INTERACTIVE", "1")
+        monkeypatch.delenv("HERMES_GATEWAY_SESSION", raising=False)
+        monkeypatch.delenv("HERMES_EXEC_ASK", raising=False)
+
+        def deny_callback(command, description, **kwargs):
+            return "deny"
+
+        res = check_dangerous_command("git reset --hard HEAD~1", "local", approval_callback=deny_callback)
+        assert res["approved"] is False
+        msg = (res.get("message") or "").lower()
+        assert "blocked" in msg or "bloqueado" in msg

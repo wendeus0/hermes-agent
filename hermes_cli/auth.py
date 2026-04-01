@@ -318,7 +318,14 @@ def _resolve_api_key_provider_secret(
 ) -> tuple[str, str]:
     """Resolve an API-key provider's token and indicate where it came from."""
     if provider_id == "copilot":
-        # Use the dedicated copilot auth module for proper token validation
+        # Keep tests and runtime deterministic: prefer explicit env vars first,
+        # then fall back to gh CLI token discovery.
+        for env_var in pconfig.api_key_env_vars:
+            val = os.getenv(env_var, "").strip()
+            if has_usable_secret(val):
+                return val, env_var
+
+        # Use dedicated copilot auth for gh auth token fallback + validation.
         try:
             from hermes_cli.copilot_auth import resolve_copilot_token
             token, source = resolve_copilot_token()
