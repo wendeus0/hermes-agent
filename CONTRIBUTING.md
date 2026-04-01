@@ -109,6 +109,17 @@ hermes chat -q "Hello"
 pytest tests/ -v
 ```
 
+### Enable repository hooks (recommended)
+
+The repository includes a pre-commit hook at `.githooks/pre-commit` that runs
+`tools/sensitive_content_guard.py` on staged files.
+
+Enable it once per clone:
+
+```bash
+git config core.hooksPath .githooks
+```
+
 ---
 
 ## Project Structure

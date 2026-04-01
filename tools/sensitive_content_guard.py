@@ -27,7 +27,12 @@ PATTERNS: list[tuple[str, re.Pattern[str]]] = [
         re.compile(r"(?i)authorization\s*[:=]\s*['\"]?bearer\s+[A-Za-z0-9._-]{16,}"),
     ),
     ("private_key_block", re.compile(r"-----BEGIN (RSA|EC|OPENSSH|PRIVATE) KEY-----")),
-    ("pem_ref", re.compile(r"\.pem\b")),
+    (
+        "sensitive_pem_path",
+        re.compile(
+            r"(?i)\b(identityfile|ssl[_-]?key|private[_-]?key|client[_-]?key|tls[_-]?key|keyfile)\b[^\n]{0,120}\.pem\b"
+        ),
+    ),
 ]
 
 ALLOWLIST_PREFIXES = (

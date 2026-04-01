@@ -151,6 +151,12 @@ uv pip install -e ".[all,dev]"
 python -m pytest tests/ -q
 ```
 
+Enable repository hooks (recommended, runs secret scanner on staged files):
+
+```bash
+git config core.hooksPath .githooks
+```
+
 > **RL Training (optional):** To work on the RL/Tinker-Atropos integration:
 > ```bash
 > git submodule update --init tinker-atropos

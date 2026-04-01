@@ -28,3 +28,19 @@ def test_safe_content_has_no_findings(tmp_path: Path):
 
     findings = guard.scan([f])
     assert findings == []
+
+
+def test_plain_pem_mention_not_flagged(tmp_path: Path):
+    f = tmp_path / "docs.txt"
+    f.write_text("Use certificado.pem na documentação\n", encoding="utf-8")
+
+    findings = guard.scan([f])
+    assert findings == []
+
+
+def test_sensitive_pem_path_assignment_flagged(tmp_path: Path):
+    f = tmp_path / "config.yaml"
+    f.write_text("identityFile: /home/user/.ssh/id_rsa.pem\n", encoding="utf-8")
+
+    findings = guard.scan([f])
+    assert any(item["pattern"] == "sensitive_pem_path" for item in findings)
